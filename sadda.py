@@ -4,15 +4,15 @@ import telebot
 from telebot import types
 
 import handler_sentences
+import record
 
-def request(message, CONNECTION_DB, bot):
+def request(sentence, USER_ID_TELEG, CONNECTION_DB, bot, type_content = 0):
     """
     
 
     """
 
     #id of user in telegram
-    USER_ID_TELEG = message.chat.id
     
     try:
         with connect(
@@ -23,16 +23,13 @@ def request(message, CONNECTION_DB, bot):
         ) as connection:
             with connection.cursor() as cursor:
 
-                markup = types.ReplyKeyboardMarkup()
-                item_search = types.KeyboardButton('Поиск')
-                item_find = types.KeyboardButton('Добавить')
-                markup.row(item_search, item_find)
 
-                sentence = message.text;
-                fl = handler_sentences.insert_answere(sentence, USER_ID_TELEG, CONNECTION_DB)
+                fl = handler_sentences.insert_answere(sentence, 
+                    USER_ID_TELEG, CONNECTION_DB, type_content)
                 
                 if not fl:
-                    bot.send_message(USER_ID_TELEG, "error", reply_markup = markup)
+                    bot.send_message(USER_ID_TELEG, "error", 
+                        reply_markup = markup)
                     return
 
                 change_state_query = f"UPDATE users SET state = 'start' "\
@@ -40,9 +37,9 @@ def request(message, CONNECTION_DB, bot):
                 cursor.execute(change_state_query)
                 connection.commit()
 
-
-                bot.send_message(USER_ID_TELEG, "Спасибо, мы приняли ваш ответ, вы в меню!",
-                    reply_markup = markup)
+                menu = record.Menu()
+                menu.print(bot, USER_ID_TELEG, 
+                    "Спасибо, мы приняли ваш ответ, вы в меню!")
                 
 
     except Error as e:

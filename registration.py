@@ -3,6 +3,8 @@ from mysql.connector import connect, Error
 import telebot
 from telebot import types
 
+import record
+
 
 def register_user(message, CONNECTION_DB, bot):
     """
@@ -37,18 +39,10 @@ def register_user(message, CONNECTION_DB, bot):
                     cursor.execute(insert_query)
                     connection.commit()
 
-                    inviting = 'Привет, красавица'
-
-                else:
-                    inviting = 'Красавица, ты уже зарегистрирована'
-
-                #adding markup
-                markup = types.ReplyKeyboardMarkup()
-                item_search = types.KeyboardButton('Поиск')
-                item_find = types.KeyboardButton('Добавить')
-                markup.row(item_search, item_find)
-
-                bot.send_message(message.chat.id, inviting, reply_markup = markup)
+                    #inviting = 'Привет, красавица'
+                
+                menu = record.Menu()
+                menu.print(bot, message.chat.id)
 
     except Error as e:
         print(e)

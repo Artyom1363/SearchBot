@@ -22,7 +22,7 @@ def normalize_word(word):
         return ''
 
 
-def search_sentence(sentence, CONNECTION_DB):
+def search_sentence(sentence, CONNECTION_DB, limit = 5):
     """
     def search_sentence(sentence)
     returns list of most relevants questions
@@ -103,23 +103,23 @@ def search_sentence(sentence, CONNECTION_DB):
                 #list with selected sentences
                 ans = list()
                     
-                for i in range(min(5, len(relevance))):
+                for i in range(min(limit, len(relevance))):
                     #relevance[i][0] is quantity of occurrence of sentence
-                    #relevance[i][1] is number of sentence
-                    sentence_num = relevance[i][1]
+                    #relevance[i][1] is id of sentence
+                    sentence_id = relevance[i][1]
                     
                     #DEBUG
-                    #print("number of sentence: ", sentence_num, ", 
+                    #print("number of sentence: ", sentence_id, ", 
                     #quantity of intersections: ", relevance[i][0])
                     
-                    sentence_query = f"select sentence, answere from sentences where id =  {sentence_num};"
-                    cursor.execute(sentence_query)
-                    result = cursor.fetchall()
-                    if len(result) == 0:
-                        continue
+                    #sentence_query = f"S sentence, answere from sentences where id =  {sentence_id};"
+                    #cursor.execute(sentence_query)
+                    #result = cursor.fetchall()
+                    #if len(result) == 0:
+                        #continue
                     
                     #adding sentence to answere
-                    ans.append((result[0][0], result[0][1]))
+                    ans.append(sentence_id)
                 
                 #insert data to db...as it seems to me...
                 connection.commit()
@@ -161,11 +161,17 @@ def insert_sentence(sentence, USER_ID_TELEG, CONNECTION_DB):
                 insert_sentence_query = f"INSERT INTO sentences (sentence, len, author_id) "\
                                         f"VALUES ('{sentence}', {len(words_normalized)}, {USER_ID_TELEG});"
                 cursor.execute(insert_sentence_query)
+
+
                 
                 # getting id of added sentence
                 sentence_id = cursor.lastrowid
                 
-                
+                #adding flag in user profile
+                set_flag_query = f"UPDATE users SET not_filled_sen_id = {sentence_id} "\
+                                 f"WHERE id = {USER_ID_TELEG}"
+                cursor.execute(set_flag_query)
+
                 #adding words
                 for word in words_normalized:
                     
@@ -208,12 +214,12 @@ def insert_sentence(sentence, USER_ID_TELEG, CONNECTION_DB):
     except Error as e:
         print(e)
 
-def insert_answere(sentence, USER_ID_TELEG, CONNECTION_DB):
+def insert_answere(sentence, USER_ID_TELEG, CONNECTION_DB, type_content = 0):
     
     """
     
     """
-    
+    print('came')
     #check sentence
     if len(sentence) > 500:
         print("you put too big string")
@@ -230,8 +236,17 @@ def insert_answere(sentence, USER_ID_TELEG, CONNECTION_DB):
             with connection.cursor() as cursor:
                 
                 #adding original of sentence
-                insert_answere_query = f"UPDATE sentences SET answere = '{sentence}' "\
-                                        f"WHERE (author_id = {USER_ID_TELEG} AND answere IS NULL);"
+                
+                get_sentence_id_query = f"SELECT not_filled_sen_id FROM users WHERE id = {USER_ID_TELEG}"
+                cursor.execute(get_sentence_id_query)
+                result = cursor.fetchall()
+                sentence_id = result[0][0]
+                
+                set_null_query = f"UPDATE users SET not_filled_sen_id = NULL WHERE id = {USER_ID_TELEG}"
+                cursor.execute(set_null_query)
+                
+                insert_answere_query = f"INSERT INTO answeres (user_id, sentence_id, ans_text, type) "\
+                                       f"VALUES ({USER_ID_TELEG}, '{sentence_id}', '{sentence}', {type_content})"
                 cursor.execute(insert_answere_query)
                 
                 connection.commit()

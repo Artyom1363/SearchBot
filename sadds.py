@@ -5,14 +5,12 @@ from telebot import types
 
 import handler_sentences
 
-def request(message, CONNECTION_DB, bot):
+def request(sentence, USER_ID_TELEG, CONNECTION_DB, bot):
     """
     
 
     """
-
     #id of user in telegram
-    USER_ID_TELEG = message.chat.id
     
     try:
         with connect(
@@ -22,12 +20,15 @@ def request(message, CONNECTION_DB, bot):
             database = CONNECTION_DB.DATABASE
         ) as connection:
             with connection.cursor() as cursor:
-                sentence = message.text;
-                fl = handler_sentences.insert_sentence(sentence, USER_ID_TELEG, CONNECTION_DB)
+
+                fl = handler_sentences.insert_sentence(sentence, 
+                    USER_ID_TELEG, 
+                    CONNECTION_DB)
 
                 if not fl:
                     #TASK: ADD INFO
-                    bot.send_message(USER_ID_TELEG, "error", reply_markup = types.ReplyKeyboardRemove())
+                    bot.send_message(USER_ID_TELEG, "error", 
+                        reply_markup = types.ReplyKeyboardRemove())
                     return
 
                 change_state_query = f"UPDATE users SET state = 'adding_answere' "\
@@ -36,8 +37,11 @@ def request(message, CONNECTION_DB, bot):
                 connection.commit()
 
 
-                bot.send_message(USER_ID_TELEG, "Укажите ответ на этот вопрос", reply_markup = types.ReplyKeyboardRemove())
+                bot.send_message(USER_ID_TELEG, 
+                    "Укажите ответ на этот вопрос", 
+                    reply_markup = types.ReplyKeyboardRemove())
                 
 
     except Error as e:
         print(e)
+

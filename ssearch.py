@@ -1,8 +1,10 @@
 from getpass import getpass
 from mysql.connector import connect, Error
-import telebot
-from telebot import types
 
+from telebot import types
+import telebot
+
+import record
 
 import handler_sentences
 
@@ -24,11 +26,6 @@ def request(message, CONNECTION_DB, bot):
         ) as connection:
             with connection.cursor() as cursor:
 
-                markup = types.ReplyKeyboardMarkup()
-                item_search = types.KeyboardButton('Поиск')
-                item_find = types.KeyboardButton('Добавить')
-                markup.row(item_search, item_find)
-
 
                 change_state_query = f"UPDATE users SET state = 'start' "\
                                      f"WHERE id = {USER_ID_TELEG};"
@@ -36,25 +33,12 @@ def request(message, CONNECTION_DB, bot):
                 connection.commit()
 
 
-                got_sentences = handler_sentences.search_sentence(message.text, CONNECTION_DB)
+                got_sentences_id = handler_sentences.search_sentence(message.text, 
+                    CONNECTION_DB, limit = 3)
+                
+                rec = record.Record(got_sentences_id)
+                rec.print(bot, CONNECTION_DB, USER_ID_TELEG)
 
-                letter = ''
-                if len(got_sentences) > 0:
-                    if type(got_sentences[0][0]) == str:
-                        letter += f"Похожий вопрос, который удалось найти: *{got_sentences[0][0]}*\n"
-                    else:
-                        letter += f"Произошла ошибка, пожалуйста напишите мне: @htppkt\n"
-
-                    if type(got_sentences[0][1]) == str:
-                        letter += f"Ответ на него:*{got_sentences[0][1]}*\n"
-                    else:
-                        letter += f"К сожалению, на этот вопрос еще не был дан ответ\n"
-                else:
-                    letter = "По вашему запросу ничего не найдено\n"
-
-                letter += '\n\nВы в меню!'
-                bot.send_message(USER_ID_TELEG, letter,
-                        reply_markup = markup, parse_mode= 'Markdown')
 
                 
                 

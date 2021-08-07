@@ -3,15 +3,16 @@ from mysql.connector import connect, Error
 import telebot
 from telebot import types
 
+import handler_sentences
 
-def request(message, CONNECTION_DB, bot):
+def request(sentence, USER_ID_TELEG, CONNECTION_DB, bot):
     """
     
 
     """
 
     #id of user in telegram
-    USER_ID_TELEG = message.chat.id
+    #USER_ID_TELEG = message.chat.id
     
     try:
         with connect(
@@ -21,13 +22,15 @@ def request(message, CONNECTION_DB, bot):
             database = CONNECTION_DB.DATABASE
         ) as connection:
             with connection.cursor() as cursor:
-                if message.text == 'Поиск':
+                mes = sentence
+                #mes = handler_sentences.normalize_word(message.text)
+                if mes == 'поиск':
                     change_state_query = f"UPDATE users SET state = 'search_sentence' "\
                                          f"WHERE id = {USER_ID_TELEG};"
                     cursor.execute(change_state_query)
                     bot.send_message(USER_ID_TELEG, "Введите запрос", reply_markup = types.ReplyKeyboardRemove())
 
-                elif message.text == 'Добавить':
+                elif mes == 'добавить':
                     change_state_query = f"UPDATE users SET state = 'adding_sentence' "\
                                          f"WHERE id = {USER_ID_TELEG};"
                     cursor.execute(change_state_query)
