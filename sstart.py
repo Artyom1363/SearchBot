@@ -3,7 +3,25 @@ from mysql.connector import connect, Error
 import telebot
 from telebot import types
 
+import time
 import handler_sentences
+
+def get_connect(CONNECTION_DB, func, data):
+    start = time.time()
+    try:
+        with connect(
+            host = CONNECTION_DB.HOST,
+            user = CONNECTION_DB.USER,
+            password = CONNECTION_DB.PASSWORD,
+            database = CONNECTION_DB.DATABASE
+        ) as connection:
+            with connection.cursor() as cursor:
+                print("Time of connecting to db: ", time.time() - start)
+                func(data, cursor, connection)
+    except Error as e:
+        print(e)
+        return False
+
 
 def request(sentence, USER_ID_TELEG, CONNECTION_DB, bot):
     """
@@ -22,6 +40,7 @@ def request(sentence, USER_ID_TELEG, CONNECTION_DB, bot):
             database = CONNECTION_DB.DATABASE
         ) as connection:
             with connection.cursor() as cursor:
+                print("DEBUG: SSTART WAS CAUSED!!")
                 mes = sentence
                 #mes = handler_sentences.normalize_word(message.text)
                 if mes == 'поиск':

@@ -2,6 +2,8 @@ import telebot
 import config
 from telebot import types
 
+from mysql.connector import connect, Error
+
 
 #importing modules needed to handle requests 
 import handler_sentences
@@ -27,6 +29,22 @@ CONNECTION_DB = config.ConnectionDb()
 
 bot = telebot.TeleBot(config.TOKEN)
 
+def func_throw_db(func, message):
+    start = time.time()
+    try:
+        with connect(
+            host = CONNECTION_DB.HOST,
+            user = CONNECTION_DB.USER,
+            password = CONNECTION_DB.PASSWORD,
+            database = CONNECTION_DB.DATABASE
+        ) as connection:
+            with connection.cursor() as cursor:
+                func(message, cursor, connection)
+
+    except Error as e:
+        print(e)	
+    print('py.py time of execution is: ', time.time() - start)
+
 
 @bot.message_handler(commands=['info'])
 def send_welcome(message):
@@ -47,66 +65,77 @@ def send_welcome(message):
 
 
 @bot.callback_query_handler(func=lambda call: True)
-def test_callback(call):
-    start = time.time()
+def callback(call):
+	func_throw_db(test_callback, call)
 
-    #DEBUG!
-    #bot.send_message(call.message.chat.id, 'test time')
-    #print("time of sending message: ", time.time() - start, " seconds\n")
-    #!
+@bot.message_handler(func=lambda m: True)
+def text_handler(message):
+	func_throw_db(text_message, message)
+
+@bot.message_handler(content_types=['document'])
+def doc_handler(message):
+	func_throw_db(handle_docs_document, message)
+
+@bot.message_handler(content_types=['photo'])
+def photo_handler(message):
+	func_throw_db(handle_photo_document, message)
+
+
+def test_callback(call, cursor, connection):
+    start = time.time()
 
     settings = [call.message.chat.id, 
                 call.message.message_id, 
                 CONNECTION_DB, 
                 bot]
 
+    new_settings = [call.message.chat.id, 
+                    call.message.message_id, 
+                    cursor,
+                    connection, 
+                    bot]
+
     data = call.data.split(sep = '_')
     print(data)
     if data[0] == 'like':
         t = record.Comment(settings)
-        t.like(data[1])
-
-    if data[0] == 'delete':
-    	ssearch.request(call.data, settings, True)
-
-    if data[0] == 'file':
-        hash_file = record.get_hash(CONNECTION_DB, data[1])
-        bot.send_document(call.message.chat.id, hash_file)
-    if data[0] == 'photo':
-    	hash_file = record.get_hash(CONNECTION_DB, data[1])
-    	bot.send_photo(call.message.chat.id, hash_file)
-    if data[0] == 'question':
-        t = record.Comment(settings)
-        t.print_comment_rec_id(data[1])
-
-    if data[0] == 'soon':
-    	t = record.Comment(settings)
-    	t.next_comment(data[1])
+        t.like(data[1], cursor, connection)
 
     if data[0] == 'back':
+        ssearch.request(call.data, settings, cursor, connection, True)
+
+    if data[0] == 'file':
+        hash_file = record.get_hash(data[1], 
+            cursor, connection)
+        bot.send_document(call.message.chat.id, hash_file)
+
+    if data[0] == 'photo':
+        hash_file = record.get_hash(data[1],
+            cursor, connection)
+        bot.send_photo(call.message.chat.id, hash_file)
+
+    if data[0] == 'question':
         t = record.Comment(settings)
-        t.prev_comment(data[1])
+        t.print_comment_rec_id(data[1], cursor, connection)
+
+    if data[0] == 'next':
+        t = record.Comment(settings)
+        t.next_comment(data[1], cursor, connection)
+
+    if data[0] == 'prev':
+        t = record.Comment(settings)
+        t.prev_comment(data[1], cursor, connection)
 
     if data[0] == 'add':
-    	sadds.request(settings, ans_id = data[1])
+        sadds.request(settings, cursor, connection, ans_id = data[1])
 
     if data[0] == 'addSame':
-        sadds.request(settings)
+        sadds.request(settings, cursor, connection)
         bot.delete_message(call.message.chat.id, call.message.message_id)
 
-    if call.data == 'поиск':
-        sstart.request(call.data, call.message.chat.id, CONNECTION_DB, bot)
-
-    if call.data == 'добавить':
-        sstart.request(call.data, call.message.chat.id, CONNECTION_DB, bot)
 
 
-    print("time of execution: ", time.time() - start, " seconds\n")
-
-
-@bot.message_handler(func=lambda m: True)
-def echo_all(message):
-    start = time.time()
+def text_message(message, cursor, connection):
     settings = [message.chat.id, 
                 message.message_id, 
                 CONNECTION_DB, 
@@ -118,45 +147,39 @@ def echo_all(message):
         action.test(bot, message)
         return
 
-    state = ustate.get_user_state(message, CONNECTION_DB)
-    print(state)
+    state = ustate.get_user_state(message, cursor, connection)
 
-    #print('DEBUG: ', state)
     print(state, message.text)
-    if state == 'start':
-        print(message.text)
-        sstart.request(message.text, message.chat.id, CONNECTION_DB, bot)
-
     if state == 'search':
-        ssearch.request(message.text, settings)
+        ssearch.request(message.text, settings, cursor, connection)
 
     if state == 'adding_sentence':
-        sadds.request(settings = settings, sentence = message.text)
+        sadds.request(settings, cursor, connection, sentence = message.text)
 
     if state == 'adding_answere':
-        sadda.request(message.text, message.chat.id, CONNECTION_DB, bot)
+        sadda.request(message.text, message.chat.id, cursor, connection, bot)
 
 
-    print("py.py time of execution: ", time.time() - start, " seconds\n")
 
-@bot.message_handler(content_types=['document'])
-def handle_docs_document(message):
-    state = ustate.get_user_state(message, CONNECTION_DB)
+
+def handle_docs_document(message, cursor, connection):
+    state = ustate.get_user_state(message, cursor, connection)
 
     if state == 'adding_answere':
         sadda.request(message.document.file_id, message.chat.id, 
-        	CONNECTION_DB, bot, type_content = 1)
+            cursor, connection, bot, type_content = 1)
 
 
-@bot.message_handler(content_types=['photo'])
-def handle_photo_document(message):
+
+def handle_photo_document(message, cursor, connection):
     file = message.photo[2].file_id
-    state = ustate.get_user_state(message, CONNECTION_DB)
+    state = ustate.get_user_state(message, cursor, connection)
 
     if state == 'adding_answere':
         sadda.request(file, message.chat.id, 
-        	CONNECTION_DB, bot, type_content = 2)
+            cursor, connection, bot, type_content = 2)
 
 
 bot.polling()
+
 
