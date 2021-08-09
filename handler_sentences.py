@@ -24,7 +24,7 @@ def normalize_word(word):
 
 def search_sentence(sentence, CONNECTION_DB, limit = 5):
     """
-    def search_sentence(sentence)
+    
     returns list of most relevants questions
     """
     #print('came')
@@ -129,130 +129,142 @@ def search_sentence(sentence, CONNECTION_DB, limit = 5):
         print(e)
 
 
-def insert_sentence(sentence, USER_ID_TELEG, CONNECTION_DB):
+def insert_sentence_to_user(sentence, USER_ID_TELEG, connection, cursor):
+    sentence = sentence.strip()
+
+
+    if len(sentence) < 2:
+        print("you put too much small string")
+        return False
+
+
+    update_sentence_in_user_query = f"UPDATE users SET sentences = '{sentence}' "\
+                                    f"WHERE id = {USER_ID_TELEG}"
+
+    cursor.execute(update_sentence_in_user_query)
+    result = cursor.fetchall()
+    connection.commit()
+    return True
+    
+
+def get_sentence_from_users(USER_ID_TELEG, connection, cursor):
+    get_sentence_from_users_query = f"SELECT sentences FROM users " \
+                                    f"WHERE id = {USER_ID_TELEG}"
+    cursor.execute(get_sentence_from_users_query)
+    result = cursor.fetchall()
+    if len(result) == 0:
+        return ''
+    else:
+        return result[0][0]
+
+
+def insert_sentence(sentence, USER_ID_TELEG, connection, cursor):
     
     """
     we get string and parse it into words, 
     after we insert all information into database
     """
+
     sentence = sentence.strip()
     
     
     #check sentence
     if len(sentence) < 3:
         print("you put too much small string")
-        return False
+        return None
         #raise ValueError('expected sentence, with more than 3 symbols but "' + sentence + '" received')
     
     
     #spliting our sentence into words
     words_normalized = [normalize_word(word) for word in sentence.split() if len(normalize_word(word)) > 0]
-
-    try:
-        with connect(
-            host = CONNECTION_DB.HOST,
-            user = CONNECTION_DB.USER,
-            password = CONNECTION_DB.PASSWORD,
-            database = CONNECTION_DB.DATABASE
-        ) as connection:
-            with connection.cursor() as cursor:
-                
-                #adding original of sentence
-                insert_sentence_query = f"INSERT INTO sentences (sentence, len, author_id) "\
-                                        f"VALUES ('{sentence}', {len(words_normalized)}, {USER_ID_TELEG});"
-                cursor.execute(insert_sentence_query)
+    
+    #adding original of sentence
+    insert_sentence_query = f"INSERT INTO sentences (sentence, len, author_id) "\
+                            f"VALUES ('{sentence}', {len(words_normalized)}, {USER_ID_TELEG});"
+    cursor.execute(insert_sentence_query)
 
 
-                
-                # getting id of added sentence
-                sentence_id = cursor.lastrowid
-                
-                #adding flag in user profile
-                set_flag_query = f"UPDATE users SET not_filled_sen_id = {sentence_id} "\
-                                 f"WHERE id = {USER_ID_TELEG}"
-                cursor.execute(set_flag_query)
+    
+    # getting id of added sentence
+    sentence_id = cursor.lastrowid
+    
 
-                #adding words
-                for word in words_normalized:
-                    
-                    test_query = f"SELECT id FROM words WHERE word = '{word}' LIMIT 1;"
-                    
-                    cursor.execute(test_query)
-                    result = cursor.fetchall()
-                    
-                    
-                    if (len(result) == 0):
-                        insert_word_query = f"INSERT INTO words (word) VALUES ('{word}');"    
-                        cursor.execute(insert_word_query)
-                        
-                        word_id = cursor.lastrowid
-                    else:
-                        word_id = result[0][0]
-                        
-                        
-                    
-                    test_query = f"SELECT words_id, sentences_id, count FROM words_in_sentences "\
-                                 f"WHERE words_id = {word_id} AND sentences_id = {sentence_id} LIMIT 1;"
-                    
-                    cursor.execute(test_query)
-                    result = cursor.fetchall()
-                    
-                    #for case if we already insert pair {word_id, sentence_id} in our 'for'
-                    if len(result) == 0:
-                        insert_query = f"INSERT INTO words_in_sentences (words_id, sentences_id) "\
-                                                          f"VALUES ({word_id}, {sentence_id});"
-                        cursor.execute(insert_query)
-                    else:
-                        update_query = f"UPDATE words_in_sentences SET count = {result[0][2] + 1} "\
-                                       f"WHERE (words_id = {result[0][0]} AND sentences_id = {result[0][1]});"
-                        cursor.execute(update_query)
-                    
-                
-                connection.commit()
-                return True
-                
-    except Error as e:
-        print(e)
+    #adding words
+    for word in words_normalized:
+        
+        test_query = f"SELECT id FROM words WHERE word = '{word}' LIMIT 1;"
+        
+        cursor.execute(test_query)
+        result = cursor.fetchall()
+        
+        
+        if (len(result) == 0):
+            insert_word_query = f"INSERT INTO words (word) VALUES ('{word}');"    
+            cursor.execute(insert_word_query)
+            
+            word_id = cursor.lastrowid
+        else:
+            word_id = result[0][0]
+            
+            
+        
+        test_query = f"SELECT words_id, sentences_id, count FROM words_in_sentences "\
+                     f"WHERE words_id = {word_id} AND sentences_id = {sentence_id} LIMIT 1;"
+        
+        cursor.execute(test_query)
+        result = cursor.fetchall()
+        
+        #for case if we already insert pair {word_id, sentence_id} in our 'for'
+        if len(result) == 0:
+            insert_query = f"INSERT INTO words_in_sentences (words_id, sentences_id) "\
+                                              f"VALUES ({word_id}, {sentence_id});"
+            cursor.execute(insert_query)
+        else:
+            update_query = f"UPDATE words_in_sentences SET count = {result[0][2] + 1} "\
+                           f"WHERE (words_id = {result[0][0]} AND sentences_id = {result[0][1]});"
+            cursor.execute(update_query)
+        
+    
+    connection.commit()
+    return sentence_id
 
-def insert_answere(sentence, USER_ID_TELEG, CONNECTION_DB, type_content = 0):
+
+def insert_qust_with_answere(answere, USER_ID_TELEG, 
+    connection, cursor, type_content = 0):
+
+    sentence = get_sentence_from_users(USER_ID_TELEG, connection, cursor)
+    data = sentence.split('__&__')
+
+    if data[0] == '@&388&':
+        return insert_answere(answere, data[1], USER_ID_TELEG, 
+                    connection, cursor, type_content)
+
+    sentence_id = insert_sentence(sentence, USER_ID_TELEG, connection, cursor)
+    if sentence_id is None:
+        print('ERROR sentence_is is NONE in handler_sentence')
+    return insert_answere(answere, sentence_id, USER_ID_TELEG, 
+        connection, cursor, type_content)
+
+
+
+def insert_answere(answere, question_id, USER_ID_TELEG, connection, cursor, type_content = 0):
     
     """
     
     """
-    print('came')
+
     #check sentence
-    if len(sentence) > 500:
+    if len(answere) > 500:
         print("you put too big string")
         return False
     
-
-    try:
-        with connect(
-            host = CONNECTION_DB.HOST,
-            user = CONNECTION_DB.USER,
-            password = CONNECTION_DB.PASSWORD,
-            database = CONNECTION_DB.DATABASE
-        ) as connection:
-            with connection.cursor() as cursor:
-                
-                #adding original of sentence
-                
-                get_sentence_id_query = f"SELECT not_filled_sen_id FROM users WHERE id = {USER_ID_TELEG}"
-                cursor.execute(get_sentence_id_query)
-                result = cursor.fetchall()
-                sentence_id = result[0][0]
-                
-                set_null_query = f"UPDATE users SET not_filled_sen_id = NULL WHERE id = {USER_ID_TELEG}"
-                cursor.execute(set_null_query)
-                
-                insert_answere_query = f"INSERT INTO answeres (user_id, sentence_id, ans_text, type) "\
-                                       f"VALUES ({USER_ID_TELEG}, '{sentence_id}', '{sentence}', {type_content})"
-                cursor.execute(insert_answere_query)
-                
-                connection.commit()
-                return True
-                
-    except Error as e:
-        print(e)
+    #adding original of sentence
+    
+    insert_answere_query = f"INSERT INTO answeres (user_id, sentence_id, ans_text, type) "\
+                           f"VALUES ({USER_ID_TELEG}, '{question_id}', '{answere}', {type_content})"
+    cursor.execute(insert_answere_query)
+    
+    connection.commit()
+    return True
 
 

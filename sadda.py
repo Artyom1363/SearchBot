@@ -24,22 +24,23 @@ def request(sentence, USER_ID_TELEG, CONNECTION_DB, bot, type_content = 0):
             with connection.cursor() as cursor:
 
 
-                fl = handler_sentences.insert_answere(sentence, 
-                    USER_ID_TELEG, CONNECTION_DB, type_content)
+                fl = handler_sentences.insert_qust_with_answere(sentence, 
+                    USER_ID_TELEG, connection, cursor, type_content)
                 
                 if not fl:
-                    bot.send_message(USER_ID_TELEG, "error", 
-                        reply_markup = markup)
+                    bot.send_message(USER_ID_TELEG, "error")
                     return
 
-                change_state_query = f"UPDATE users SET state = 'start' "\
+                change_state_query = f"UPDATE users SET state = 'search' "\
                                      f"WHERE id = {USER_ID_TELEG};"
                 cursor.execute(change_state_query)
                 connection.commit()
 
-                menu = record.Menu()
-                menu.print(bot, USER_ID_TELEG, 
-                    "Спасибо, мы приняли ваш ответ, вы в меню!")
+                #menu = record.Menu()
+                #menu.print(bot, USER_ID_TELEG, 
+                bot.send_message(USER_ID_TELEG, 
+                    text = "Спасибо, мы приняли ваш ответ, вы в меню!\nВведите запрос:",
+                    )
                 
 
     except Error as e:

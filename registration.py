@@ -32,7 +32,7 @@ def register_user(message, CONNECTION_DB, bot):
                 result = cursor.fetchall()
                 if result[0][0] == 0:
 
-               	    state = 'start'
+               	    state = 'search'
                     insert_query = f"INSERT INTO users (state, name, id) " \
                     f"VALUES ('{state}', '{user_name}', {USER_ID_TELEG} );"
 
@@ -41,8 +41,9 @@ def register_user(message, CONNECTION_DB, bot):
 
                     #inviting = 'Привет, красавица'
                 
-                menu = record.Menu()
-                menu.print(bot, message.chat.id)
+                bot.send_message(USER_ID_TELEG, text = 'Введите запрос:')
+                #menu = record.Menu()
+                #menu.print(bot, message.chat.id)
 
     except Error as e:
         print(e)

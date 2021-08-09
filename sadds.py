@@ -5,13 +5,13 @@ from telebot import types
 
 import handler_sentences
 
-def request(sentence, USER_ID_TELEG, CONNECTION_DB, bot):
+def request(settings, ans_id = -1, sentence = ''):
     """
     
 
     """
     #id of user in telegram
-    
+    USER_ID_TELEG, message_id, CONNECTION_DB, bot = settings
     try:
         with connect(
             host = CONNECTION_DB.HOST,
@@ -20,10 +20,14 @@ def request(sentence, USER_ID_TELEG, CONNECTION_DB, bot):
             database = CONNECTION_DB.DATABASE
         ) as connection:
             with connection.cursor() as cursor:
+                #print('sadds.py was open')
+                if ans_id == -1 and sentence == '':
+                    fl = True
+                elif ans_id != -1:
+                    fl = insert_by_answere_id(ans_id, connection, cursor, settings)
 
-                fl = handler_sentences.insert_sentence(sentence, 
-                    USER_ID_TELEG, 
-                    CONNECTION_DB)
+                else:
+                    fl = insert_by_question(sentence, connection, cursor, settings)
 
                 if not fl:
                     #TASK: ADD INFO
@@ -38,10 +42,30 @@ def request(sentence, USER_ID_TELEG, CONNECTION_DB, bot):
 
 
                 bot.send_message(USER_ID_TELEG, 
-                    "Укажите ответ на этот вопрос", 
+                    "Напишите ответ или загрузите файл", 
                     reply_markup = types.ReplyKeyboardRemove())
                 
 
     except Error as e:
         print(e)
+
+def insert_by_answere_id(ans_id, connection, cursor, settings):
+    get_sentence_id_query = f"SELECT sentence_id FROM answeres "\
+                            f"WHERE id = {ans_id};"
+    cursor.execute(get_sentence_id_query)
+    result = cursor.fetchall()
+    if len(result) == 0:
+        return False
+
+    return handler_sentences.insert_sentence_to_user(str('@&388&__&__' + str(result[0][0])), 
+        settings[0], 
+        connection, 
+        cursor)
+
+
+def insert_by_question(sentence, connection, cursor, settings):
+    return handler_sentences.insert_sentence_to_user(sentence, 
+        settings[0], 
+        connection, 
+        cursor)
 
