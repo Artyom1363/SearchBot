@@ -99,6 +99,10 @@ class Comment:
             comment = types.InlineKeyboardButton(
                 text = 'нажмите для загрузки✉️', 
                 callback_data = f'file_{comment_id}')
+        elif type_content == 2:
+        	comment = types.InlineKeyboardButton(
+                text = 'нажмите для загрузки✉️', 
+                callback_data = f'photo_{comment_id}')
         else:
             comment = types.InlineKeyboardButton(text = text, 
                 callback_data = f'none')
@@ -147,12 +151,9 @@ class Comment:
                     likes_info = likes.get_likes(self.USER_ID_TELEG, 
                     	sen[0][2], cursor, connection)
 
-                    if sen[0][1] == 1:
-                        markup = self.make_markup_comment(sen[0][2], 
-                            sen[0][2], likes_info, type_content = 1)
-                    else:
-                        markup = self.make_markup_comment(sen[0][2], 
-                            sen[0][0], likes_info)
+                    
+                    markup = self.make_markup_comment(sen[0][2], 
+                        sen[0][0], likes_info, type_content = sen[0][1])
 
                     self.bot.edit_message_text(chat_id = self.USER_ID_TELEG, 
                         message_id = self.message_id,  
@@ -179,12 +180,9 @@ class Comment:
                     likes_info = likes.get_likes(self.USER_ID_TELEG, 
                     	ans_id, cursor, connection)
 
-                    if sen[0][1] == 1:
-                        markup = self.make_markup_comment(ans_id, 
-                            ans_id, likes_info, type_content = 1)
-                    else:
-                        markup = self.make_markup_comment(ans_id, 
-                            sen[0][0], likes_info)
+                    
+                    markup = self.make_markup_comment(ans_id, 
+                        sen[0][0], likes_info, type_content = sen[0][1])
 
                     self.bot.edit_message_text(chat_id = self.USER_ID_TELEG, 
                         message_id = self.message_id,  

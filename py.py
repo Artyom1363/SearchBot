@@ -72,7 +72,9 @@ def test_callback(call):
     if data[0] == 'file':
         hash_file = record.get_hash(CONNECTION_DB, data[1])
         bot.send_document(call.message.chat.id, hash_file)
-
+    if data[0] == 'photo':
+    	hash_file = record.get_hash(CONNECTION_DB, data[1])
+    	bot.send_photo(call.message.chat.id, hash_file)
     if data[0] == 'question':
         t = record.Comment(settings)
         t.print_comment_rec_id(data[1])
@@ -145,8 +147,15 @@ def handle_docs_document(message):
         sadda.request(message.document.file_id, message.chat.id, 
         	CONNECTION_DB, bot, type_content = 1)
 
-    test_link_file = message.document.file_id
-    print(message.document.file_id)
+
+@bot.message_handler(content_types=['photo'])
+def handle_photo_document(message):
+    file = message.photo[2].file_id
+    state = ustate.get_user_state(message, CONNECTION_DB)
+
+    if state == 'adding_answere':
+        sadda.request(file, message.chat.id, 
+        	CONNECTION_DB, bot, type_content = 2)
 
 
 bot.polling()
