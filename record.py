@@ -97,11 +97,11 @@ class Comment:
         print("likes_info in record: ", likes_info)
         if type_content == 1:
             comment = types.InlineKeyboardButton(
-                text = 'нажмите для загрузки✉️', 
+                text = f'{text}\n✉️', 
                 callback_data = f'file_{comment_id}')
         elif type_content == 2:
             comment = types.InlineKeyboardButton(
-                text = 'нажмите для загрузки✉️', 
+                text = f'{text}\n✉️', 
                 callback_data = f'photo_{comment_id}')
         else:
             comment = types.InlineKeyboardButton(text = text, 
@@ -211,7 +211,7 @@ class Comment:
 
 
 def get_hash(ans_id, cursor, connection):
-    get_comment_query = f"SELECT ans_text FROM " \
+    get_comment_query = f"SELECT file_id FROM " \
                        f"answeres WHERE id = '{ans_id}' LIMIT 1;"
     cursor.execute(get_comment_query)
     sen = cursor.fetchall()

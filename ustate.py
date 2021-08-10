@@ -9,7 +9,7 @@ def get_user_state(message, cursor, connection):
     function returns state of user who sent this message
 
     """
-    
+
     USER_ID_TELEG = message.chat.id
     test_query = f"SELECT state FROM users "\
                 f"WHERE id = {USER_ID_TELEG};"
@@ -21,3 +21,9 @@ def get_user_state(message, cursor, connection):
     	return ""
 
     return result[0][0]
+
+def set_search_state(USER_ID_TELEG, cursor, connection):
+    set_state = f"UPDATE users SET state = 'search' "\
+                f"WHERE id = {USER_ID_TELEG};"
+    cursor.execute(set_state)
+    connection.commit()

@@ -6,10 +6,11 @@ from telebot import types
 import handler_sentences
 import record
 
-def request(sentence, USER_ID_TELEG, cursor, connection, bot, type_content = 0):
+
+def request(sentence, USER_ID_TELEG, cursor, connection, bot, type_content = 0, file_id = ''):
 
     fl = handler_sentences.insert_qust_with_answere(sentence, 
-        USER_ID_TELEG, connection, cursor, type_content)
+        USER_ID_TELEG, connection, cursor, type_content, file_id)
     
     if not fl:
         bot.send_message(USER_ID_TELEG, "error")
@@ -23,6 +24,6 @@ def request(sentence, USER_ID_TELEG, cursor, connection, bot, type_content = 0):
     #menu = record.Menu()
     #menu.print(bot, USER_ID_TELEG, 
     bot.send_message(USER_ID_TELEG, 
-        text = "Спасибо, мы приняли ваш ответ, вы в меню!\nВведите запрос:",
+        text = "Спасибо, мы приняли ваш ответ, вы в меню!\nВведите запрос:"
         )
     

@@ -2,6 +2,8 @@ from getpass import getpass
 from mysql.connector import connect, Error
 import re
 
+import config
+
 
 def normalize_word(word):
     '''
@@ -24,7 +26,7 @@ def normalize_word(word):
 
 def search_sentence(sentence, CONNECTION_DB, limit = 5):
     """
-    
+    def search_sentence(sentence)
     returns list of most relevants questions
     """
     #print('came')
@@ -169,9 +171,9 @@ def insert_sentence(sentence, USER_ID_TELEG, connection, cursor):
     
     
     #check sentence
-    if len(sentence) < 3:
-        print("you put too much small string")
-        return None
+    #if len(sentence) < 3:
+    #    print("you put too much small string")
+    #   return None
         #raise ValueError('expected sentence, with more than 3 symbols but "' + sentence + '" received')
     
     
@@ -230,38 +232,43 @@ def insert_sentence(sentence, USER_ID_TELEG, connection, cursor):
 
 
 def insert_qust_with_answere(answere, USER_ID_TELEG, 
-    connection, cursor, type_content = 0):
+    connection, cursor, type_content = 0, file_id = ''):
 
     sentence = get_sentence_from_users(USER_ID_TELEG, connection, cursor)
-    data = sentence.split('__&__')
+    data = sentence.split(config.toSplit)
 
-    if data[0] == '@&388&':
+    if data[0] == config.firstPart:
         return insert_answere(answere, data[1], USER_ID_TELEG, 
-                    connection, cursor, type_content)
+                    connection, cursor, type_content, file_id)
 
     sentence_id = insert_sentence(sentence, USER_ID_TELEG, connection, cursor)
     if sentence_id is None:
         print('ERROR sentence_is is NONE in handler_sentence')
     return insert_answere(answere, sentence_id, USER_ID_TELEG, 
-        connection, cursor, type_content)
+        connection, cursor, type_content, file_id)
 
 
 
-def insert_answere(answere, question_id, USER_ID_TELEG, connection, cursor, type_content = 0):
+def insert_answere(answere, question_id, USER_ID_TELEG, 
+    connection, cursor, type_content = 0, file_id = ''):
     
     """
     
     """
 
     #check sentence
-    if len(answere) > 500:
+    if type(answere) == str and len(answere) > 500:
         print("you put too big string")
         return False
     
     #adding original of sentence
-    
-    insert_answere_query = f"INSERT INTO answeres (user_id, sentence_id, ans_text, type) "\
+    if type_content > 0:
+        insert_answere_query = f"INSERT INTO answeres (user_id, sentence_id, ans_text, type, file_id) "\
+                           f"VALUES ({USER_ID_TELEG}, '{question_id}', '{answere}', {type_content}, '{file_id}')"
+    else:
+        insert_answere_query = f"INSERT INTO answeres (user_id, sentence_id, ans_text, type) "\
                            f"VALUES ({USER_ID_TELEG}, '{question_id}', '{answere}', {type_content})"
+
     cursor.execute(insert_answere_query)
     
     connection.commit()

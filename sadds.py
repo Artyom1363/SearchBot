@@ -5,6 +5,14 @@ from telebot import types
 
 import handler_sentences
 
+def get_markup_cancell():
+    cancell = types.InlineKeyboardButton(text = 'отмена', 
+            callback_data = f'cancell')
+
+    markup = types.InlineKeyboardMarkup()
+    markup.add(cancell)
+    return markup
+
 def request(settings, cursor, connection, ans_id = -1, sentence = ''):
 
     USER_ID_TELEG, message_id, CONNECTION_DB, bot = settings
@@ -30,7 +38,7 @@ def request(settings, cursor, connection, ans_id = -1, sentence = ''):
 
     bot.send_message(USER_ID_TELEG, 
         "Напишите ответ или загрузите файл", 
-        reply_markup = types.ReplyKeyboardRemove())
+        reply_markup = get_markup_cancell())
                 
 
 def insert_by_answere_id(ans_id, connection, cursor, settings):

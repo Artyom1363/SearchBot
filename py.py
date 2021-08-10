@@ -11,7 +11,6 @@ import registration
 import ustate
 
 #importing moduls needed to handle user's state
-import sstart
 import ssearch
 import sadds
 import sadda
@@ -100,6 +99,9 @@ def test_callback(call, cursor, connection):
     if data[0] == 'like':
         t = record.Comment(settings)
         t.like(data[1], cursor, connection)
+    if data[0] == 'cancell':
+    	ustate.set_search_state(call.message.chat.id, cursor, connection)
+    	bot.delete_message(call.message.chat.id, call.message.message_id)
 
     if data[0] == 'back':
         ssearch.request(call.data, settings, cursor, connection, True)
@@ -161,23 +163,28 @@ def text_message(message, cursor, connection):
 
 
 
-
 def handle_docs_document(message, cursor, connection):
+    #print(message.text)
+    #print("message: ", (message))
+    #print('caption: ', message.caption)
     state = ustate.get_user_state(message, cursor, connection)
+    file_id = message.document.file_id
 
     if state == 'adding_answere':
-        sadda.request(message.document.file_id, message.chat.id, 
-            cursor, connection, bot, type_content = 1)
+        sadda.request(message.caption, message.chat.id, 
+            cursor, connection, bot, 1, file_id)
 
 
 
 def handle_photo_document(message, cursor, connection):
-    file = message.photo[2].file_id
+    #print(message.text)
+    #print('caption: ', message.caption)
+    file_id = message.photo[2].file_id
     state = ustate.get_user_state(message, cursor, connection)
 
     if state == 'adding_answere':
-        sadda.request(file, message.chat.id, 
-            cursor, connection, bot, type_content = 2)
+        sadda.request(message.caption, message.chat.id, 
+            cursor, connection, bot, 2, file_id)
 
 
 bot.polling()
