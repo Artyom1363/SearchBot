@@ -248,7 +248,6 @@ def insert_qust_with_answere(answere, USER_ID_TELEG,
         connection, cursor, type_content, file_id)
 
 
-
 def insert_answere(answere, question_id, USER_ID_TELEG, 
     connection, cursor, type_content = 0, file_id = ''):
     
@@ -275,3 +274,23 @@ def insert_answere(answere, question_id, USER_ID_TELEG,
     return True
 
 
+def get_sentence_by_id(sentence_id, cursor, connection):
+    get_sentence_query = f"SELECT sentence FROM sentences "\
+                         f"WHERE id = {sentence_id};"
+    cursor.execute(get_sentence_query)
+    result = cursor.fetchall()
+    if len(result) == 0:
+        return False
+
+    return result[0][0]
+
+
+def get_sentence_id_by_ans_id(ans_id, cursor, connection):
+    get_sentence_id_query = f"SELECT sentence_id FROM answeres "\
+                            f"WHERE id = {ans_id};"
+    cursor.execute(get_sentence_id_query)
+    result = cursor.fetchall()
+    if len(result) == 0:
+        return False
+
+    return result[0][0]

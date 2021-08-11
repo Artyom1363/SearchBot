@@ -99,8 +99,9 @@ def test_callback(call, cursor, connection):
     if data[0] == 'like':
         t = record.Comment(settings)
         t.like(data[1], cursor, connection)
+
     if data[0] == 'cancell':
-    	ustate.set_search_state(call.message.chat.id, cursor, connection)
+    	ustate.set_state(call.message.chat.id, 'search', cursor, connection)
     	bot.delete_message(call.message.chat.id, call.message.message_id)
 
     if data[0] == 'back':
@@ -151,12 +152,11 @@ def text_message(message, cursor, connection):
 
     state = ustate.get_user_state(message, cursor, connection)
 
-    print(state, message.text)
     if state == 'search':
         ssearch.request(message.text, settings, cursor, connection)
 
-    if state == 'adding_sentence':
-        sadds.request(settings, cursor, connection, sentence = message.text)
+    #if state == 'adding_sentence':
+    #    sadds.request(settings, cursor, connection, sentence = message.text)
 
     if state == 'adding_answere':
         sadda.request(message.text, message.chat.id, cursor, connection, bot)
@@ -164,12 +164,9 @@ def text_message(message, cursor, connection):
 
 
 def handle_docs_document(message, cursor, connection):
-    #print(message.text)
-    #print("message: ", (message))
-    #print('caption: ', message.caption)
     state = ustate.get_user_state(message, cursor, connection)
     file_id = message.document.file_id
-
+    #print(file_id)
     if state == 'adding_answere':
         sadda.request(message.caption, message.chat.id, 
             cursor, connection, bot, 1, file_id)
@@ -177,8 +174,6 @@ def handle_docs_document(message, cursor, connection):
 
 
 def handle_photo_document(message, cursor, connection):
-    #print(message.text)
-    #print('caption: ', message.caption)
     file_id = message.photo[2].file_id
     state = ustate.get_user_state(message, cursor, connection)
 

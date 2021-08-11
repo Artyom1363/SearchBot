@@ -22,8 +22,8 @@ def get_user_state(message, cursor, connection):
 
     return result[0][0]
 
-def set_search_state(USER_ID_TELEG, cursor, connection):
-    set_state = f"UPDATE users SET state = 'search' "\
+def set_state(USER_ID_TELEG, state, cursor, connection):
+    set_state = f"UPDATE users SET state = '{state}' "\
                 f"WHERE id = {USER_ID_TELEG};"
     cursor.execute(set_state)
     connection.commit()

@@ -4,6 +4,8 @@ from mysql.connector import connect, Error
 from telebot import types
 import time
 
+import handler_sentences
+
 import likes
 
 
@@ -163,10 +165,17 @@ class Comment:
         markup = self.make_markup_comment(ans_id, 
             ans_text, likes_info, type_content = type_content)
 
+        sentence_id = handler_sentences.get_sentence_id_by_ans_id(ans_id, 
+        	cursor, connection)
+
+        sentence = handler_sentences.get_sentence_by_id(sentence_id, 
+        	cursor, connection)
+
         self.bot.edit_message_text(chat_id = self.USER_ID_TELEG, 
             message_id = self.message_id,  
-            text = 'Сейчас вы видите комментарии пользователей:',
-            reply_markup = markup)
+            text = f'Сейчас вы видите комментарии пользователей на вопрос: *{sentence}*',
+            reply_markup = markup, 
+            parse_mode = 'Markdown')
     
     def get_all_comments_id(self, ans_id, cursor, connection):
         sentence_id_query = f"SELECT sentence_id FROM " \
@@ -219,7 +228,6 @@ def get_hash(ans_id, cursor, connection):
         return sen[0][0]
     else:
         return ''
-
 
 def get_upper_id(elem, lst):
     for i in range(len(lst)):

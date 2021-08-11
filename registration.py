@@ -40,7 +40,9 @@ def register_user(message, CONNECTION_DB, bot):
                     connection.commit()
 
                     #inviting = 'Привет, красавица'
-                
+                #отправка user_guide
+                bot.send_message(USER_ID_TELEG, text = 'Пожалуйста, потратьте 30 секунд и ознакомьтесь в Руководством пользователя:')
+                bot.send_document(USER_ID_TELEG, 'BQACAgIAAxkBAAIG82ET6g-BpTHBJ-FCrHd8vzFH0PTIAAJmEQAC1pWhSKggKqZ2in5UIAQ')
                 bot.send_message(USER_ID_TELEG, text = 'Введите запрос:')
                 #menu = record.Menu()
                 #menu.print(bot, message.chat.id)
