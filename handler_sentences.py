@@ -294,3 +294,5 @@ def get_sentence_id_by_ans_id(ans_id, cursor, connection):
         return False
 
     return result[0][0]
+
+

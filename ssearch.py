@@ -42,5 +42,5 @@ def request(sentence, settings, cursor, connection, button_back = False):
         CONNECTION_DB, limit = 5)
 
     rec = record.Record(got_sentences_id, settings, button_back)
-    rec.print()
+    rec.print(cursor, connection)
 

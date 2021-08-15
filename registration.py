@@ -1,51 +1,30 @@
-from getpass import getpass
-from mysql.connector import connect, Error
 import telebot
 from telebot import types
 
 import record
 
 
-def register_user(message, CONNECTION_DB, bot):
-    """
-
-    task: we need to print info about user's state
-
-    """
-    user_name = message.chat.username
-
-    #id of user in telegram
-    USER_ID_TELEG = message.chat.id
+def register_user(USER_ID_TELEG, user_name, cursor, connection, bot):
     
-    try:
-        with connect(
-            host = CONNECTION_DB.HOST,
-            user = CONNECTION_DB.USER,
-            password = CONNECTION_DB.PASSWORD,
-            database = CONNECTION_DB.DATABASE
-        ) as connection:
-            with connection.cursor() as cursor:
-                test_query = f"SELECT count(1) FROM users "\
-                            f"WHERE id = {USER_ID_TELEG};"
-                
-                cursor.execute(test_query)
-                result = cursor.fetchall()
-                if result[0][0] == 0:
+    test_query = f"SELECT count(1) FROM users "\
+                f"WHERE id = {USER_ID_TELEG};"
+    
+    cursor.execute(test_query)
+    result = cursor.fetchall()
+    if result[0][0] == 0:
 
-               	    state = 'search'
-                    insert_query = f"INSERT INTO users (state, name, id) " \
-                    f"VALUES ('{state}', '{user_name}', {USER_ID_TELEG} );"
+        state = 'search'
+        insert_query = f"INSERT INTO users (state, name, id) " \
+        f"VALUES ('{state}', '{user_name}', {USER_ID_TELEG} );"
 
-                    cursor.execute(insert_query)
-                    connection.commit()
+        cursor.execute(insert_query)
+        connection.commit()
 
-                    #inviting = 'Привет, красавица'
-                #отправка user_guide
-                bot.send_message(USER_ID_TELEG, text = 'Пожалуйста, потратьте 30 секунд и ознакомьтесь в Руководством пользователя:')
-                bot.send_document(USER_ID_TELEG, 'BQACAgIAAxkBAAIG82ET6g-BpTHBJ-FCrHd8vzFH0PTIAAJmEQAC1pWhSKggKqZ2in5UIAQ')
-                bot.send_message(USER_ID_TELEG, text = 'Введите запрос:')
-                #menu = record.Menu()
-                #menu.print(bot, message.chat.id)
+    #отправка user_guide
+    bot.send_message(USER_ID_TELEG, 
+        text = 'Пожалуйста, потратьте 30 секунд и ознакомьтесь в Руководством пользователя:')
+    bot.send_document(USER_ID_TELEG, 
+        'BQACAgIAAxkBAAIHF2EUAZ4nUM_C04JaQJHy7iA76qpAAALGEQAC1pWhSKuQ535Ac65jIAQ')
+    bot.send_message(USER_ID_TELEG, text = 'Введите запрос:')
 
-    except Error as e:
-        print(e)
+

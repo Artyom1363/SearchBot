@@ -21,82 +21,66 @@ class Record:
         except IndexError as ie:
             print(ie)
 
-    def print(self):
-    
-        try:
-            with connect(
-                host = self.CONNECTION_DB.HOST,
-                user = self.CONNECTION_DB.USER,
-                password = self.CONNECTION_DB.PASSWORD,
-                database = self.CONNECTION_DB.DATABASE
-            ) as connection:
-                with connection.cursor() as cursor:
+    def print(self, cursor, connection):
 
+        markup = types.InlineKeyboardMarkup()
 
-                    markup = types.InlineKeyboardMarkup()
-
-                    for record_id in self.rec_ids:
-                        get_data_query = f"SELECT sentence FROM " \
-                                    f"sentences WHERE id = '{record_id}' LIMIT 1;"
-                        cursor.execute(get_data_query)
-                        sen = cursor.fetchall()
-                        button = types.InlineKeyboardButton(text = sen[0][0], 
-                            callback_data = f'question_{record_id}')
-                        markup.add(button)
+        for record_id in self.rec_ids:
+            sen = handler_sentences.get_sentence_by_id(
+            	record_id, cursor, connection)
+            button = types.InlineKeyboardButton(text = sen, 
+                callback_data = f'question_{record_id}')
+            markup.add(button)
 
 
 
-                    button = types.InlineKeyboardButton(
-                        text = "Добавить ответ на свой вопрос📥", 
-                        callback_data = f'addSame')
+        button = types.InlineKeyboardButton(
+            text = "Добавить ответ на свой вопрос📥", 
+            callback_data = f'addSame')
 
-                    markup.add(button)
+        markup.add(button)
 
 
-                    letter = ''
-                    if len(self.rec_ids) > 0:
-                        letter = "Вот что нам удалось найти:\n"
-
-                    
-                    else:
-                        letter = "По вашему запросу ничего не найдено\n"
-
+        letter = ''
+        if len(self.rec_ids) > 0:
+            letter = "Вот что нам удалось найти:\n"
 
         
-                    #start = time.time()
-                    if self.button_back:
-                        self.bot.edit_message_text(chat_id = self.USER_ID_TELEG, 
-                            message_id = self.message_id,
-                            text = letter, 
-                            reply_markup = markup, 
-                            parse_mode= 'Markdown')
-                    else:
-                        self.bot.send_message(self.USER_ID_TELEG, 
-                            letter, 
-                            reply_markup = markup, 
-                            parse_mode= 'Markdown')
+        else:
+            letter = "По вашему запросу ничего не найдено\n"
 
-                    #print("time of sending message: ", 
-                    #time.time() - start, " seconds\n")
 
-        except Error as e:
-            print(e)
+
+        #start = time.time()
+        if self.button_back:
+            self.bot.edit_message_text(chat_id = self.USER_ID_TELEG, 
+                message_id = self.message_id,
+                text = letter, 
+                reply_markup = markup, 
+                parse_mode= 'Markdown')
+        else:
+            self.bot.send_message(self.USER_ID_TELEG, 
+                letter, 
+                reply_markup = markup, 
+                parse_mode= 'Markdown')
+
+                    
 
 
 
 class Comment:
 
-    def __init__(self, settings):
+    def __init__(self, settings, call_id = '0'):
         try:
             self.USER_ID_TELEG = settings[0] 
             self.message_id = settings[1] 
-            self.CONNECTION_DB = settings[2] 
             self.bot = settings[3]
         except IndexError as ie:
             print(ie)
+        self.call_id = call_id
 
     def make_markup_comment(self, comment_id, text, likes_info, type_content = 0):
-        print("likes_info in record: ", likes_info)
+        
         if type_content == 1:
             comment = types.InlineKeyboardButton(
                 text = f'{text}\n✉️', 
@@ -178,13 +162,11 @@ class Comment:
             parse_mode = 'Markdown')
     
     def get_all_comments_id(self, ans_id, cursor, connection):
-        sentence_id_query = f"SELECT sentence_id FROM " \
-                           f"answeres WHERE id = '{ans_id}' LIMIT 1;"
-        cursor.execute(sentence_id_query)
-        sen = cursor.fetchall()
+        sen_id = handler_sentences.get_sentence_id_by_ans_id(
+        	ans_id, cursor, connection)
 
         answeres_id_query = f"SELECT id FROM " \
-                           f"answeres WHERE sentence_id = '{sen[0][0]}' "\
+                           f"answeres WHERE sentence_id = '{sen_id}' "\
                            f"order by likes DESC, id DESC;"
         cursor.execute(answeres_id_query)
         ids_cort = cursor.fetchall()
@@ -197,7 +179,10 @@ class Comment:
         ids = self.get_all_comments_id(ans_id, cursor, connection)
         upper_id = get_upper_id(ans_id, ids)
         if upper_id is None:
-            print("next is None")
+
+            self.bot.answer_callback_query(self.call_id, 
+            	text = 'Вы смотрите последний комментарий!', 
+            	show_alert = True)
         else:
             self.print_comment_ans_id(upper_id, cursor, connection)
 
@@ -206,7 +191,10 @@ class Comment:
         ids = self.get_all_comments_id(ans_id, cursor, connection)
         lower_id = get_lower_id(ans_id, ids)
         if lower_id is None:
-            print("prev is None")
+
+            self.bot.answer_callback_query(self.call_id, 
+            	text = 'Вы смотрите первый комментарий', 
+            	show_alert = True)
        	else:
             self.print_comment_ans_id(lower_id, cursor, connection)
 

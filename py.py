@@ -19,8 +19,8 @@ import sadda
 import record
 import statistics
 
-#DEBUG
-import action
+import sup
+
 import time
 
 #class with variables for connecting to db
@@ -41,26 +41,21 @@ def func_throw_db(func, message):
                 func(message, cursor, connection)
 
     except Error as e:
-        print(e)	
-    print('py.py time of execution is: ', time.time() - start)
+        log = f"Error: {e}"
+        sup.print_log(log)
+
+    log = f"time of exec: {time.time() - start}"
+    sup.print_log(log)
 
 
 @bot.message_handler(commands=['info'])
-def send_welcome(message):
-    start = time.time()
-    settings = [message.chat.id, 
-                message.message_id, 
-                CONNECTION_DB, 
-                bot]
-
-    bot.send_message(message.chat.id, 'Ваша статистика:')
-    statistics.print_statistics(settings)
-    print("time of execution: ", time.time() - start, " seconds\n")
+def sta(message):
+    func_throw_db(com_info, message)
     
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    registration.register_user(message, CONNECTION_DB, bot)
+    func_throw_db(registr, message)
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -79,9 +74,20 @@ def doc_handler(message):
 def photo_handler(message):
 	func_throw_db(handle_photo_document, message)
 
+def com_info(message, cursor, connection):
+    sup.mess_log(message)
+    statistics.print_statistics(message.chat.id, cursor, connection, bot)
+
+
+def registr(message, cursor, connection):
+    sup.mess_log(message)
+    registration.register_user(message.chat.id, message.chat.username, 
+        cursor, connection, bot)
 
 def test_callback(call, cursor, connection):
-    start = time.time()
+    #make log
+    sup.print_call_log(call)
+    
 
     settings = [call.message.chat.id, 
                 call.message.message_id, 
@@ -95,7 +101,8 @@ def test_callback(call, cursor, connection):
                     bot]
 
     data = call.data.split(sep = '_')
-    print(data)
+
+
     if data[0] == 'like':
         t = record.Comment(settings)
         t.like(data[1], cursor, connection)
@@ -122,11 +129,11 @@ def test_callback(call, cursor, connection):
         t.print_comment_rec_id(data[1], cursor, connection)
 
     if data[0] == 'next':
-        t = record.Comment(settings)
+        t = record.Comment(settings, call.id)
         t.next_comment(data[1], cursor, connection)
 
     if data[0] == 'prev':
-        t = record.Comment(settings)
+        t = record.Comment(settings, call.id)
         t.prev_comment(data[1], cursor, connection)
 
     if data[0] == 'add':
@@ -139,24 +146,19 @@ def test_callback(call, cursor, connection):
 
 
 def text_message(message, cursor, connection):
+
+    sup.mess_log(message)
+
     settings = [message.chat.id, 
                 message.message_id, 
                 CONNECTION_DB, 
                 bot]
     
 
-    if message.text == 't':
-        bot.delete_message(message.chat.id, message.message_id)
-        action.test(bot, message)
-        return
-
     state = ustate.get_user_state(message, cursor, connection)
 
     if state == 'search':
         ssearch.request(message.text, settings, cursor, connection)
-
-    #if state == 'adding_sentence':
-    #    sadds.request(settings, cursor, connection, sentence = message.text)
 
     if state == 'adding_answere':
         sadda.request(message.text, message.chat.id, cursor, connection, bot)
@@ -164,6 +166,7 @@ def text_message(message, cursor, connection):
 
 
 def handle_docs_document(message, cursor, connection):
+    sup.doc_log(message)
     state = ustate.get_user_state(message, cursor, connection)
     file_id = message.document.file_id
     #print(file_id)
@@ -174,6 +177,7 @@ def handle_docs_document(message, cursor, connection):
 
 
 def handle_photo_document(message, cursor, connection):
+    sup.photo_log(message)
     file_id = message.photo[2].file_id
     state = ustate.get_user_state(message, cursor, connection)
 

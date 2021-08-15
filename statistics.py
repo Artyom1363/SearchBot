@@ -38,35 +38,25 @@ def get_q_of_ques(cursor):
     get_q_of_ques_query = f"SELECT count(1) FROM sentences;"
     return get_result(get_q_of_ques_query, cursor)
 
-def print_statistics(settings):
-    USER_ID_TELEG, message_id, CONNECTION_DB, bot = settings
-    try:
-        with connect(
-            host = CONNECTION_DB.HOST,
-            user = CONNECTION_DB.USER,
-            password = CONNECTION_DB.PASSWORD,
-            database = CONNECTION_DB.DATABASE
-        ) as connection:
-            with connection.cursor() as cursor:
-                q_sents = get_quantity_of_own_answeres(USER_ID_TELEG, 
-                        cursor)
-                q_likes = get_quantity_of_own_likes(USER_ID_TELEG, cursor)
-                statistics = f"Кол-во моих 📥: {q_sents}\n"\
-                             f"Кол-во моих ❤️: {q_likes}\n"
+def print_statistics(USER_ID_TELEG, cursor, connection, bot):
+    bot.send_message(USER_ID_TELEG, 'Ваша статистика:')
+    q_sents = get_quantity_of_own_answeres(USER_ID_TELEG, 
+            cursor)
+    q_likes = get_quantity_of_own_likes(USER_ID_TELEG, cursor)
+    statistics = f"Кол-во моих 📥: {q_sents}\n"\
+                 f"Кол-во моих ❤️: {q_likes}\n"
 
-                if str(USER_ID_TELEG) == '556001234':
-                    q_u = get_quantity_of_users(cursor)
-                    q_ans = get_q_of_ans(cursor)
-                    q_likes = get_q_of_likes(cursor)
-                    q_ques = get_q_of_ques(cursor)
-                    statistics += f"Кол-во 🧍‍♂: {q_u}\n" \
-                                  f"Кол-во 📥 :{q_ans}\n" \
-                                  f"Кол-во ❤️: {q_likes}\n" \
-                                  f"Кол-во ❓: {q_ques}\n"
+    if str(USER_ID_TELEG) == '556001234':
+        q_u = get_quantity_of_users(cursor)
+        q_ans = get_q_of_ans(cursor)
+        q_likes = get_q_of_likes(cursor)
+        q_ques = get_q_of_ques(cursor)
+        statistics += f"Кол-во 🧍‍♂: {q_u}\n" \
+                      f"Кол-во 📥 :{q_ans}\n" \
+                      f"Кол-во ❤️: {q_likes}\n" \
+                      f"Кол-во ❓: {q_ques}\n"
 
-                bot.send_message(USER_ID_TELEG,  
-                    statistics
-                    )
+    bot.send_message(USER_ID_TELEG,  
+        statistics
+        )
 
-    except Error as e:
-        print(e)

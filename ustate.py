@@ -27,3 +27,5 @@ def set_state(USER_ID_TELEG, state, cursor, connection):
                 f"WHERE id = {USER_ID_TELEG};"
     cursor.execute(set_state)
     connection.commit()
+
+
