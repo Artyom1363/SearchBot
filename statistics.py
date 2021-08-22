@@ -12,38 +12,45 @@ def get_result(query, cursor):
     else:
         return 'None'
 
+
 def get_quantity_of_own_answeres(USER_ID_TELEG, cursor):
     get_quantity_of_ans_query = f"SELECT count(1) FROM answeres " \
                                 f"WHERE user_id = {USER_ID_TELEG};"
     return get_result(get_quantity_of_ans_query, cursor)
 
+
 def get_quantity_of_own_likes(USER_ID_TELEG, cursor):
     get_quantity_of_likes_query = f"SELECT count(1) FROM users_liked_answeres " \
-                                      f"WHERE user_id = {USER_ID_TELEG};"
+                                  f"WHERE user_id = {USER_ID_TELEG};"
     return get_result(get_quantity_of_likes_query, cursor)
+
 
 def get_quantity_of_users(cursor):
     get_q_of_users_query = f"SELECT count(1) FROM users;"
     return get_result(get_q_of_users_query, cursor)
 
+
 def get_q_of_ans(cursor):
     get_q_of_ans_query = f"SELECT count(1) FROM answeres;"
     return get_result(get_q_of_ans_query, cursor)
+
 
 def get_q_of_likes(cursor):
     get_q_of_likes_query = f"SELECT count(1) FROM users_liked_answeres;"
     return get_result(get_q_of_likes_query, cursor)
 
+
 def get_q_of_ques(cursor):
     get_q_of_ques_query = f"SELECT count(1) FROM sentences;"
     return get_result(get_q_of_ques_query, cursor)
 
+
 def print_statistics(USER_ID_TELEG, cursor, connection, bot):
     bot.send_message(USER_ID_TELEG, 'Ваша статистика:')
-    q_sents = get_quantity_of_own_answeres(USER_ID_TELEG, 
-            cursor)
+    q_sents = get_quantity_of_own_answeres(USER_ID_TELEG,
+                                           cursor)
     q_likes = get_quantity_of_own_likes(USER_ID_TELEG, cursor)
-    statistics = f"Кол-во моих 📥: {q_sents}\n"\
+    statistics = f"Кол-во моих 📥: {q_sents}\n" \
                  f"Кол-во моих ❤️: {q_likes}\n"
 
     if str(USER_ID_TELEG) == '556001234':
@@ -56,7 +63,6 @@ def print_statistics(USER_ID_TELEG, cursor, connection, bot):
                       f"Кол-во ❤️: {q_likes}\n" \
                       f"Кол-во ❓: {q_ques}\n"
 
-    bot.send_message(USER_ID_TELEG,  
-        statistics
-        )
-
+    bot.send_message(USER_ID_TELEG,
+                     statistics
+                     )
