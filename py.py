@@ -21,6 +21,10 @@ import sup
 
 import time
 
+#only for generating password
+from random import choice
+from string import ascii_uppercase
+
 # class with variables for connecting to db
 CONNECTION_DB = config.ConnectionDb()
 
@@ -59,6 +63,11 @@ def send_welcome(message):
     func_throw_db(registr, message)
 
 
+@bot.message_handler(commands=['pass'])
+def send_welcome(message):
+    func_throw_db(gen_pass, message)
+
+
 @bot.callback_query_handler(func=lambda call: True)
 def callback(call):
     func_throw_db(callback_message, call)
@@ -73,6 +82,9 @@ def text_handler(message):
 def doc_handler(message):
     func_throw_db(document_message, message)
 
+@bot.message_handler(content_types=['video'])
+def video_handler(message):
+    func_throw_db(video_message, message)
 
 @bot.message_handler(content_types=['photo'])
 def photo_handler(message):
@@ -88,6 +100,18 @@ def registr(message, cursor, connection):
     sup.mess_log(message)
     registration.register_user(message.chat.id, message.chat.username,
                                cursor, connection, bot)
+
+
+def gen_pass(message, cursor, connection):
+    sup.mess_log(message)
+    #make module with this func
+    USER_ID_TELEG = message.chat.id
+    user_password = ''.join(choice(ascii_uppercase) for i in range(12))
+    set_password_query = f"UPDATE users SET password = '{user_password}' WHERE id = {USER_ID_TELEG}"
+    cursor.execute(set_password_query)
+    connection.commit()
+    bot.send_message(USER_ID_TELEG,
+                     text=f'Ваш пароль: {user_password}')
 
 
 def callback_message(call, cursor, connection):
@@ -185,6 +209,12 @@ def photo_message(message, cursor, connection):
         sadda.request(message.caption, message.chat.id,
                       cursor, connection, bot, 2, file_id)
 
+
+def video_message(message, cursor, connection):
+    file_id = message.video.file_id
+    sup.print_log('get_video: ' + str(file_id))
+    bot.send_message(chat_id = message.chat.id,
+                     text = 'К сожалению, на текущий момент, вы не можете отправлять видео')
 
 while True:
     try:

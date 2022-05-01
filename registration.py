@@ -2,6 +2,7 @@ import telebot
 from telebot import types
 
 import record
+import config
 
 
 def register_user(USER_ID_TELEG, user_name, cursor, connection, bot):
@@ -20,7 +21,7 @@ def register_user(USER_ID_TELEG, user_name, cursor, connection, bot):
 
     # отправка user_guide
     bot.send_message(USER_ID_TELEG,
-                     text='Пожалуйста, потратьте 30 секунд и ознакомьтесь в Руководством пользователя:')
-    bot.send_document(USER_ID_TELEG,
-                      'BQACAgIAAxkBAAIHF2EUAZ4nUM_C04JaQJHy7iA76qpAAALGEQAC1pWhSKuQ535Ac65jIAQ')
+                     text='Пожалуйста, потратьте 30 секунд и ознакомьтесь с Руководством пользователя:')
+    bot.send_document(USER_ID_TELEG, config.USER_GUIDE)
+    bot.send_video(USER_ID_TELEG, config.VIDEO_GUIDE)
     bot.send_message(USER_ID_TELEG, text='Введите запрос:')
